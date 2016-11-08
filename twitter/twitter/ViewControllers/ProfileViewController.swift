@@ -9,18 +9,33 @@
 import UIKit
 import MBProgressHUD
 
-class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIScrollViewDelegate {
     var user: User!
     var tweets: [Tweet] = []
+    var backgroundImageView2: UIImageView!
+    var userBioLabel: UILabel!
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var profileImageView: UIImageView!
     @IBOutlet weak var backgroundImageView: UIImageView!
     @IBOutlet weak var screenNameLabel: UILabel!
     @IBOutlet weak var nameLabel: UILabel!
+    @IBOutlet weak var pageControl: UIPageControl!
+    @IBOutlet weak var headerScrollView: UIScrollView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         self.setup()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        self.backgroundImageView2.frame.size.width = self.backgroundImageView.frame.size.width
+        self.backgroundImageView2.frame.origin.x = self.backgroundImageView.frame.size.width
+        self.headerScrollView.contentSize.width += self.headerScrollView.contentSize.width
+        self.userBioLabel.frame.size.width = self.headerScrollView.frame.size.width
+        self.userBioLabel.frame.origin.x = self.headerScrollView.frame.size.width
+        self.userBioLabel.frame.origin.y = self.headerScrollView.frame.size.height - 70
+        self.headerScrollView.addSubview(self.userBioLabel)
     }
     
     //MARK: - TableView Datasource
@@ -65,6 +80,7 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
             return cell
         }
     }
+    
     //MARK: - TableView Delegate
     
     public func numberOfSections(in tableView: UITableView) -> Int {
@@ -98,6 +114,15 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         return nil
     }
     
+    //MARK: - UIScrollview Delegate
+    
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        if scrollView.tag == 100 {
+            let page : Int = Int(round(scrollView.contentOffset.x / 320))
+            pageControl.currentPage = page
+        }
+    }
+    
     //MARK: - Utils
     
     fileprivate func setup(){
@@ -106,15 +131,15 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         self.tableView.rowHeight = UITableViewAutomaticDimension
         if self.user == nil{
             self.user = User.currentUser
+        }else{
+            self.navigationItem.title = self.user.screenname
         }
         // navbar
         self.navigationController?.navigationBar.barTintColor = UIColor(red: (0/255.0), green: (172/255.0), blue: (237/255.0), alpha: 1.0)
         self.navigationController?.navigationBar.titleTextAttributes = [NSForegroundColorAttributeName:
             UIColor.white]
-        self.navigationController?.navigationBar.tintColor = UIColor(
-            red: (0/255.0), green: (172/255.0), blue: (237/255.0), alpha: 1.0
-        )
-        
+        self.navigationController?.navigationBar.tintColor = UIColor.white
+
         let nib = UINib(nibName: "StatsSectionView", bundle: nil)
         self.tableView.register(nib, forHeaderFooterViewReuseIdentifier: "StatsSectionView")
         self.nameLabel.text = self.user.name
@@ -123,6 +148,18 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         self.profileImageView.layer.cornerRadius = 6
         self.profileImageView.clipsToBounds = true
         self.backgroundImageView.setImageWith(self.user.backgroundUrl!)
+        // 2nd image view
+        self.backgroundImageView2 = UIImageView()
+        self.backgroundImageView2.setImageWith(self.user.backgroundUrl!)
+        self.backgroundImageView2.frame = self.backgroundImageView.frame
+        self.headerScrollView.addSubview(self.backgroundImageView2)
+        // user description
+        self.userBioLabel = UILabel()
+        self.userBioLabel.text = self.user.bio
+        self.userBioLabel.textAlignment = .center
+        self.userBioLabel.textColor = UIColor.white
+        self.userBioLabel.sizeToFit()
+        // initial data
         MBProgressHUD.showAdded(to: self.view, animated: false)
         self.user.getUserTimeline { (tweets: [Tweet]?, error: Error?) in
             if error == nil {

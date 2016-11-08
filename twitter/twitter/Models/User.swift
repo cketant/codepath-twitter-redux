@@ -19,10 +19,12 @@ class User: NSObject {
     var followersCount: Int?
     var followingCount: Int?
     var tweetsCount: Int?
+    var bio: String?
     
     init(dictionary: NSDictionary) {
         self.userId = dictionary["id_str"] as? String
         self.name = dictionary["name"] as? String
+        self.bio = dictionary["description"] as? String
         self.screenname = dictionary["screen_name"] as? String
         self.tagline = dictionary["description"] as? String
         self.tweetsCount = dictionary["statuses_count"] as? Int
